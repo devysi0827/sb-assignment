@@ -11,12 +11,12 @@ const CellWrapper = styled.div<CellWrapperProps>`
   width: 25px;
   height: 25px;
   padding: 5px;
-  border: 1px solid ${COLORS.gray200};
+  border: 1px solid ${COLORS.Pink100};
   display: flex;
   justify-content: center;
   align-items: center;
   cursor: ${(props) => props.$hasBallon && !props.$isClicked && 'pointer'};
-  background-color: ${(props) => (props.$isClicked ? COLORS.yellow100 : COLORS.white)};
+  background-color: ${(props) => (props.$isClicked ? COLORS.Blue400 : COLORS.Navy200)};
 
   img {
     width: 25px;
@@ -24,7 +24,7 @@ const CellWrapper = styled.div<CellWrapperProps>`
   }
 
   &:hover {
-    background-color: ${(props) => props.$hasBallon && !props.$isClicked && COLORS.gray100};
+    background-color: ${(props) => props.$hasBallon && !props.$isClicked && COLORS.Blue500};
   }
 `;
 
