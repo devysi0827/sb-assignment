@@ -10,16 +10,14 @@ const DIRECTIONS = [
   [0, -1],
 ];
 
+// NOTE. BFS
 const countAndVisitBallonCluster = (board: Square[][], size: number, index: number) => {
   const startRow = Math.floor(index / size);
   const startCol = index % size;
-  const newBoard = board.map((row) => row.map((square) => ({ ...square })));
   const queue: [number, number][] = [[startRow, startCol]];
   let count = 1;
 
-  newBoard[startRow][startCol].isClicked = true;
-
-  // NOTE. BFS 로직
+  board[startRow][startCol].isClicked = true;
   while (queue.length > 0) {
     const [row, col] = queue.shift()!;
 
@@ -32,30 +30,34 @@ const countAndVisitBallonCluster = (board: Square[][], size: number, index: numb
         newRow < size &&
         newCol >= 0 &&
         newCol < size &&
-        !newBoard[newRow][newCol].isClicked &&
-        newBoard[newRow][newCol].hasBallon
+        !board[newRow][newCol].isClicked &&
+        board[newRow][newCol].hasBallon
       ) {
-        newBoard[newRow][newCol].isClicked = true;
+        board[row][col].isClicked = true;
         queue.push([newRow, newCol]);
         count += 1;
       }
     }
   }
 
-  return { newBoard, count };
+  return count;
 };
 
 const generateAnswer = (board: Square[][], size: number): number[] => {
-  let copyBoard = board.map((row) => row.map((square) => ({ ...square })));
   const answer: number[] = [];
 
   for (let row = 0; row < size; row += 1) {
     for (let col = 0; col < size; col += 1) {
-      if (copyBoard[row][col].hasBallon && !copyBoard[row][col].isClicked) {
-        const { count, newBoard } = countAndVisitBallonCluster(copyBoard, size, row * size + col);
-        copyBoard = newBoard;
+      if (board[row][col].hasBallon && !board[row][col].isClicked) {
+        const count = countAndVisitBallonCluster(board, size, row * size + col);
         answer.push(count);
       }
+    }
+  }
+
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      board[row][col].isClicked = false;
     }
   }
 
@@ -91,9 +93,8 @@ export function useBoard(size: number, setGameState: (gamestate: GameState) => v
   const completeGame = () => setGameState('complete');
   const endGame = () => setGameState('gameover');
   const isCorrectAnswer = (count: number) => answers[step] === count;
-  const progressGame = (newBoard: Square[][]) => {
+  const progressGame = () => {
     setStep((prev) => prev + 1);
-    setBoard(newBoard);
 
     if (step === answers.length - 1) {
       completeGame();
@@ -101,10 +102,10 @@ export function useBoard(size: number, setGameState: (gamestate: GameState) => v
   };
 
   const checkAnswer = (index: number) => {
-    const { count, newBoard } = countAndVisitBallonCluster(board, size, index);
+    const count = countAndVisitBallonCluster(board, size, index);
 
     if (isCorrectAnswer(count)) {
-      progressGame(newBoard);
+      progressGame();
     } else {
       endGame();
     }

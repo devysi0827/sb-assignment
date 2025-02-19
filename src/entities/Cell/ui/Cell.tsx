@@ -21,7 +21,6 @@ const CellWrapper = styled.div<CellWrapperProps>`
   img {
     width: 25px;
     height: 25px;
-    display: ${(props) => (props.$hasBallon ? 'block' : 'none')};
   }
 
   &:hover {

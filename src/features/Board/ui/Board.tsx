@@ -1,7 +1,8 @@
 import Cell from '@entities/cell/ui/Cell';
 import Modal from '@shared/components/Modal/Modal';
 import useNavigatePage from '@shared/hooks/useNavigatePage';
-import { useState } from 'react';
+import React, { useState } from 'react';
+import { FixedSizeGrid as Grid } from 'react-window';
 import styled from 'styled-components';
 
 import { GameState } from '../model/board.types';
@@ -13,20 +14,25 @@ interface BoardProps {
 }
 
 const BoardContainer = styled.div<BoardProps>`
-  display: grid;
-  grid-template-columns: ${({ size }) => `repeat(${size}, 1fr)`};
-  grid-template-rows: ${({ size }) => `repeat(${size}, 1fr)`};
-  width: fit-content;
-  height: fit-content;
+  display: flex;
+  flex-wrap: wrap;
+  width: ${({ size }) => size * CELL_SIZE + 20}px;
+  height: ${({ size }) => size * CELL_SIZE + 20}px;
+  overflow: auto;
   gap: 0;
   margin: 0 auto;
 `;
 
+const CELL_SIZE = 37;
+
 export default function Board() {
-  const { size, setSize } = useSizeStore();
   const [gameState, setGameState] = useState<GameState>('proceed');
+
+  const { size, setSize } = useSizeStore();
   const { board, checkAnswer } = useBoard(size, setGameState);
   const { movePage } = useNavigatePage();
+
+  const MemoizedCell = React.memo(Cell);
 
   const moveToIntro = () => {
     movePage('/');
@@ -35,19 +41,34 @@ export default function Board() {
   return (
     <>
       <BoardContainer size={size}>
-        {board.map((row, rowIndex) =>
-          row.map((square, colIndex) => {
-            const index = rowIndex * size + colIndex;
-            return (
-              <Cell
-                key={index}
-                index={index}
-                hasBallon={square.hasBallon}
-                isClicked={square.isClicked}
-                checkAnswer={checkAnswer}
-              />
-            );
-          })
+        {board.length >= size && (
+          <Grid
+            columnCount={size}
+            rowCount={size}
+            columnWidth={CELL_SIZE}
+            rowHeight={CELL_SIZE}
+            width={size * CELL_SIZE}
+            height={size * CELL_SIZE}
+            outerElementType={BoardContainer}
+            itemKey={({ columnIndex, rowIndex }) => rowIndex * size + columnIndex}
+          >
+            {({ columnIndex, rowIndex, style }) => {
+              const square = board[rowIndex][columnIndex];
+              const index = rowIndex * size + columnIndex;
+
+              return (
+                <div style={style}>
+                  <MemoizedCell
+                    key={index}
+                    index={index}
+                    hasBallon={square.hasBallon}
+                    isClicked={square.isClicked}
+                    checkAnswer={checkAnswer}
+                  />
+                </div>
+              );
+            }}
+          </Grid>
         )}
       </BoardContainer>
 
