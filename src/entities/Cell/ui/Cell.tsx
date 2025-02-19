@@ -1,3 +1,5 @@
+import ballonImg from '@shared/assets/ballon.png';
+import { COLORS } from '@shared/const/colors';
 import styled from 'styled-components';
 
 interface CellWrapperProps {
@@ -8,41 +10,46 @@ interface CellWrapperProps {
 const CellWrapper = styled.div<CellWrapperProps>`
   width: 25px;
   height: 25px;
-  border: 1px solid #ccc;
+  padding: 5px;
+  border: 1px solid ${COLORS.gray200};
   display: flex;
   justify-content: center;
   align-items: center;
-  cursor: pointer;
-  background-color: ${(props) => (props.$isClicked ? '#ffeb3b' : '#fff')};
+  cursor: ${(props) => props.$hasBallon && !props.$isClicked && 'pointer'};
+  background-color: ${(props) => (props.$isClicked ? COLORS.yellow100 : COLORS.white)};
 
   img {
-    width: 30px;
-    height: 30px;
+    width: 25px;
+    height: 25px;
     display: ${(props) => (props.$hasBallon ? 'block' : 'none')};
   }
 
   &:hover {
-    background-color: ${(props) => (props.$hasBallon && !props.$isClicked ? '#f0f0f0' : '')};
+    background-color: ${(props) => props.$hasBallon && !props.$isClicked && COLORS.gray100};
   }
 `;
 
 interface CellProps {
-  hasBallon: boolean;
-  checkAnswer: (index: number) => void;
   index: number;
+  hasBallon: boolean;
   isClicked: boolean;
+  checkAnswer: (index: number) => void;
 }
 
-export default function Cell({ hasBallon, checkAnswer, index, isClicked }: CellProps) {
-  const handleClick = () => {
-    if (hasBallon && !isClicked) {
+export default function Cell({ index, hasBallon, isClicked, checkAnswer }: CellProps) {
+  const isClickable = () => {
+    return hasBallon && !isClicked;
+  };
+
+  const clickHandler = () => {
+    if (isClickable()) {
       checkAnswer(index);
     }
   };
 
   return (
-    <CellWrapper $hasBallon={hasBallon} $isClicked={isClicked} onClick={handleClick}>
-      {hasBallon && <p>1</p>}
+    <CellWrapper $hasBallon={hasBallon} $isClicked={isClicked} onClick={clickHandler}>
+      {hasBallon && <img src={ballonImg} alt="풍선" />}
     </CellWrapper>
   );
 }

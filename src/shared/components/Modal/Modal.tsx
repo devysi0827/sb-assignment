@@ -1,3 +1,4 @@
+import { COLORS } from '@shared/const/colors';
 import styled from 'styled-components';
 
 export interface ModalProps {
@@ -25,14 +26,14 @@ const ModalOverlay = styled.div`
   left: 0;
   width: 100%;
   height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: ${COLORS.black50};
   display: flex;
   justify-content: center;
   align-items: center;
 `;
 
 const ModalContent = styled.div`
-  background-color: white;
+  background-color: ${COLORS.white};
   padding: 20px;
   border-radius: 10px;
   text-align: center;
@@ -40,13 +41,13 @@ const ModalContent = styled.div`
 
 const ModalButton = styled.button`
   padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
+  background-color: ${COLORS.blue100};
+  color: ${COLORS.white};
   border: none;
   border-radius: 5px;
   cursor: pointer;
 
   &:hover {
-    background-color: #0056b3;
+    background-color: ${COLORS.blue200};
   }
 `;

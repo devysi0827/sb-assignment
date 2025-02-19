@@ -1,24 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
+import { GameState, Square } from './board.types';
+
+// 상하좌우
 const DIRECTIONS = [
-  [1, 0],
   [-1, 0],
+  [1, 0],
   [0, 1],
   [0, -1],
 ];
 
-const bfs = (
-  board: boolean[][],
-  size: number,
-  startRow: number,
-  startCol: number,
-  visited: boolean[][]
-) => {
-  const newVisited = visited.map((row) => [...row]);
+const countAndVisitBallonCluster = (board: Square[][], size: number, index: number) => {
+  const startRow = Math.floor(index / size);
+  const startCol = index % size;
+  const newBoard = board.map((row) => row.map((square) => ({ ...square })));
   const queue: [number, number][] = [[startRow, startCol]];
-  newVisited[startRow][startCol] = true;
   let count = 1;
 
+  newBoard[startRow][startCol].isClicked = true;
+
+  // NOTE. BFS 로직
   while (queue.length > 0) {
     const [row, col] = queue.shift()!;
 
@@ -31,29 +32,29 @@ const bfs = (
         newRow < size &&
         newCol >= 0 &&
         newCol < size &&
-        !newVisited[newRow][newCol] &&
-        board[newRow][newCol]
+        !newBoard[newRow][newCol].isClicked &&
+        newBoard[newRow][newCol].hasBallon
       ) {
-        newVisited[newRow][newCol] = true;
+        newBoard[newRow][newCol].isClicked = true;
         queue.push([newRow, newCol]);
-        count++;
+        count += 1;
       }
     }
   }
 
-  return { count, visited: newVisited };
+  return { newBoard, count };
 };
 
-const generateAnswer = (board: boolean[][], size: number): number[] => {
-  let visited: boolean[][] = Array.from({ length: size }, () => Array(size).fill(false));
+const generateAnswer = (board: Square[][], size: number): number[] => {
+  let copyBoard = board.map((row) => row.map((square) => ({ ...square })));
   const answer: number[] = [];
 
-  for (let row = 0; row < size; row++) {
-    for (let col = 0; col < size; col++) {
-      if (board[row][col] && !visited[row][col]) {
-        const groupSize = bfs(board, size, row, col, visited);
-        visited = groupSize.visited;
-        answer.push(groupSize.count);
+  for (let row = 0; row < size; row += 1) {
+    for (let col = 0; col < size; col += 1) {
+      if (copyBoard[row][col].hasBallon && !copyBoard[row][col].isClicked) {
+        const { count, newBoard } = countAndVisitBallonCluster(copyBoard, size, row * size + col);
+        copyBoard = newBoard;
+        answer.push(count);
       }
     }
   }
@@ -61,27 +62,53 @@ const generateAnswer = (board: boolean[][], size: number): number[] => {
   return answer.sort((a, b) => b - a);
 };
 
-const generateRandomBoard = (size: number, ratio: number = 0.5): boolean[][] => {
+const generateRandomBoard = (size: number, ratio: number = 0.5): Square[][] => {
   return Array.from({ length: size }, () =>
-    Array.from({ length: size }, () => Math.random() < ratio)
+    Array.from({ length: size }, () => ({
+      hasBallon: Math.random() < ratio,
+      isClicked: false,
+    }))
   );
 };
 
-export function useBoard(size: number, setIsGameOver: (gameOver: boolean) => void) {
-  const [randomBoard] = useState(() => generateRandomBoard(size));
-  const [answers] = useState(() => generateAnswer(randomBoard, size));
-  const [ballons, setBallons] = useState<boolean[][]>(generateRandomBoard(size, 0));
-  const [cnt, setCnt] = useState(0);
+export function useBoard(size: number, setGameState: (gamestate: GameState) => void) {
+  const [board, setBoard] = useState<Square[][]>([]);
+  const [answers, setAnswer] = useState<number[]>([]);
+  const [step, setStep] = useState(0);
 
-  const checkAnswer = (index: number) => {
-    const userAnswer = bfs(randomBoard, size, Math.floor(index / size), index % size, ballons);
-    if (answers[cnt] === userAnswer.count) {
-      setCnt((prev) => prev + 1);
-      setBallons(userAnswer.visited);
-    } else {
-      setIsGameOver(true);
+  useEffect(() => {
+    const initializeBoard = () => {
+      const board = generateRandomBoard(size);
+      setBoard(board);
+      setAnswer(() => generateAnswer(board, size));
+      setStep(0);
+      setGameState('proceed');
+    };
+
+    initializeBoard();
+  }, [size, setGameState]);
+
+  const completeGame = () => setGameState('complete');
+  const endGame = () => setGameState('gameover');
+  const isCorrectAnswer = (count: number) => answers[step] === count;
+  const progressGame = (newBoard: Square[][]) => {
+    setStep((prev) => prev + 1);
+    setBoard(newBoard);
+
+    if (step === answers.length - 1) {
+      completeGame();
     }
   };
 
-  return { randomBoard, ballons, checkAnswer };
+  const checkAnswer = (index: number) => {
+    const { count, newBoard } = countAndVisitBallonCluster(board, size, index);
+
+    if (isCorrectAnswer(count)) {
+      progressGame(newBoard);
+    } else {
+      endGame();
+    }
+  };
+
+  return { board, checkAnswer };
 }

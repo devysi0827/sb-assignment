@@ -1,6 +1,6 @@
+import Game from '@pages/Game';
+import Intro from '@pages/Intro';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Intro from './pages/Intro';
-import Game from './pages/Game';
 
 function App() {
   return (

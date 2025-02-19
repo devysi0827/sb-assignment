@@ -1,12 +1,18 @@
-import Cell from '@entities/Cell/ui/Cell';
-import { useBoard } from '../model/useBoard';
+import Cell from '@entities/cell/ui/Cell';
+import Modal from '@shared/components/Modal/Modal';
+import useNavigatePage from '@shared/hooks/useNavigatePage';
+import { useState } from 'react';
 import styled from 'styled-components';
 
-interface BoardContainerProps {
+import { GameState } from '../model/board.types';
+import { useBoard } from '../model/useBoard';
+import { useSizeStore } from '../model/useSizeStore';
+
+interface BoardProps {
   size: number;
 }
 
-const BoardContainer = styled.div<BoardContainerProps>`
+const BoardContainer = styled.div<BoardProps>`
   display: grid;
   grid-template-columns: ${({ size }) => `repeat(${size}, 1fr)`};
   grid-template-rows: ${({ size }) => `repeat(${size}, 1fr)`};
@@ -16,34 +22,52 @@ const BoardContainer = styled.div<BoardContainerProps>`
   margin: 0 auto;
 `;
 
-interface BoardProps {
-  size: number;
-  setIsGameOver: React.Dispatch<React.SetStateAction<boolean>>;
-}
+export default function Board() {
+  const { size, setSize } = useSizeStore();
+  const [gameState, setGameState] = useState<GameState>('proceed');
+  const { board, checkAnswer } = useBoard(size, setGameState);
+  const { movePage } = useNavigatePage();
 
-export default function Board({ size, setIsGameOver }: BoardProps) {
-  const { randomBoard, ballons, checkAnswer } = useBoard(size, setIsGameOver);
+  const moveToIntro = () => {
+    movePage('/');
+  };
 
   return (
     <>
-      <hr />
       <BoardContainer size={size}>
-        {randomBoard.map((row, rowIndex) =>
-          row.map((ballon, colIndex) => {
+        {board.map((row, rowIndex) =>
+          row.map((square, colIndex) => {
             const index = rowIndex * size + colIndex;
-
             return (
               <Cell
                 key={index}
                 index={index}
-                hasBallon={ballon}
-                isClicked={ballons[rowIndex][colIndex]}
+                hasBallon={square.hasBallon}
+                isClicked={square.isClicked}
                 checkAnswer={checkAnswer}
               />
             );
           })
         )}
       </BoardContainer>
+
+      {gameState === 'gameover' && (
+        <Modal
+          onClose={moveToIntro}
+          title="게임 오버"
+          text={`current level : ${size}`}
+          buttonText="타이틀로 돌아가기"
+        />
+      )}
+
+      {gameState === 'complete' && (
+        <Modal
+          onClose={() => setSize(size + 1)}
+          title="레벨 업"
+          text={`next level : ${size + 1}`}
+          buttonText="다음 스테이지로 가기"
+        />
+      )}
     </>
   );
 }
