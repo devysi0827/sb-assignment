@@ -33,7 +33,7 @@ const countAndVisitBallonCluster = (board: Square[][], size: number, index: numb
         !board[newRow][newCol].isClicked &&
         board[newRow][newCol].hasBallon
       ) {
-        board[row][col].isClicked = true;
+        board[newRow][newCol].isClicked = true;
         queue.push([newRow, newCol]);
         count += 1;
       }
